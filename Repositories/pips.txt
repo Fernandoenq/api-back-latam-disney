@@ -1,0 +1,11 @@
+pip install pandas
+pip install mysql-connector-python 9.0.0 (9.0.1 está bugada e não conecta com a Hostinger)
+pip install requests
+pip install numpy
+pip install flask
+pip install flask-cors
+pip install pydantic
+
+
+
+sudo timedatectl set-timezone America/Sao_Paulo

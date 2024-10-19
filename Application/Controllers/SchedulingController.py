@@ -1,0 +1,136 @@
+from flask import jsonify, request
+import traceback
+from Services.Services.ConnectionService import ConnectionService
+from Services.Services.ValidationService import ValidationService
+from Application.Models.Request.SchedulingRequestModel import SchedulingRequestModel
+from Application.Models.Request.ReschedulingRequestModel import ReschedulingRequestModel
+from Services.Services.SchedulingService import SchedulingService
+from Application.Models.Response.ErrorResponseModel import ErrorResponseModel
+
+
+class SchedulingController:
+    @staticmethod
+    def setup_controller(app):
+        @app.route('/Scheduling/SchedulingsByCpf/<int:cpf>', methods=['GET'])
+        def get_schedulings_by_cpf(cpf):
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                schedule_df = SchedulingService().get_schedules_by_cpf(cursor, cpf)
+
+                return jsonify(schedule_df.to_dict(orient='records')), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/NotViewedSchedules', methods=['GET'])
+        def get_not_viewed_schedules():
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                schedule_df = SchedulingService().get_not_viewed_schedules(cursor)
+
+                return jsonify(schedule_df.to_dict(orient='records')), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/Dashboard', methods=['GET'])
+        def get_dashboard():
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                schedule_df = SchedulingService().get_all_schedules(cursor)
+
+                return jsonify(schedule_df.to_dict(orient='records')), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/Scheduling', methods=['PUT'])
+        def to_schedule():
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                scheduling_request = request.get_json()
+                scheduling_request = SchedulingRequestModel(scheduling_request)
+
+                validations = ValidationService.validate_scheduling(cursor)
+                if validations.is_valid is False:
+                    return jsonify(ErrorResponseModel(Errors=validations.errors).dict()), 422
+
+                is_scheduled = SchedulingService().to_schedule(cursor, scheduling_request.person_id,
+                                                               scheduling_request.organizer_id,
+                                                               scheduling_request.scheduling_id)
+                if is_scheduled is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Não foi possível realizar este agendamento']).dict()), 422
+
+                connection.commit()
+                return jsonify(), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/Rescheduling', methods=['PUT'])
+        def to_reschedule():
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                rescheduling_request = request.get_json()
+                rescheduling_request = ReschedulingRequestModel(rescheduling_request)
+
+                validations = ValidationService.validate_rescheduling(cursor)
+                if validations.is_valid is False:
+                    return jsonify(ErrorResponseModel(Errors=validations.errors).dict()), 422
+
+                is_rescheduled = SchedulingService().to_reschedule(cursor, rescheduling_request)
+                if is_rescheduled is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Não foi possível realizar este reagendamento']).dict()), 422
+
+                connection.commit()
+                return jsonify(), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
