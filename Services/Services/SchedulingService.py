@@ -4,31 +4,54 @@ from Domain.Entities.Scheduling import Scheduling
 from Domain.Enums.SchedulingStatus import SchedulingStatus
 import pandas as pd
 from datetime import datetime
+from typing import List
 
 
 class SchedulingService:
     @staticmethod
     def get_schedules_by_id(cursor, scheduling_id: int) -> pd.DataFrame:
-        cursor.execute("Select * From Scheduling Where SchedulingId = %s", (scheduling_id,))
+        cursor.execute("""Select s.PersonId, s.OrganizerId
+                            From Scheduling s 
+                            Where s.SchedulingId = %s""", (scheduling_id,))
         scheduling_loaded = cursor.fetchall()
 
-        return SchedulingService._to_scheduling_df(scheduling_loaded)
+        scheduling = Scheduling()
+        return pd.DataFrame(scheduling_loaded, columns=[scheduling.person_id, scheduling.organizer_id])
 
     @staticmethod
     def get_schedules_by_cpf(cursor, cpf: str) -> pd.DataFrame:
-        cursor.execute("""SELECT s.* FROM Scheduling s
-                            Join Person p on p.PersonId = s.PersonId
-                            where p.Cpf = %s""", (cpf,))
+        now = datetime.now()
+        today = now.date()
+
+        cursor.execute("""
+            SELECT s.SchedulingId, t.TurnId, t.TurnTime, s.SchedulingStatus 
+            FROM Scheduling s
+            JOIN Person p ON p.PersonId = s.PersonId
+            JOIN Turn t ON t.TurnId = s.TurnId
+            WHERE p.Cpf = %s
+            AND t.TurnTime > %s
+            AND DATE(t.TurnTime) = %s
+            ORDER BY t.TurnTime ASC
+        """, (cpf, now, today))
+
         scheduling_loaded = cursor.fetchall()
 
         return SchedulingService._to_scheduling_df(scheduling_loaded)
 
     @staticmethod
     def get_not_viewed_schedules(cursor) -> pd.DataFrame:
-        cursor.execute("""SELECT s.* FROM Scheduling s 
+        now = datetime.now()
+        today = now.date()
+
+        cursor.execute("""
+                        SELECT s.SchedulingId, t.TurnId, t.TurnTime, s.SchedulingStatus 
+                        FROM Scheduling s
                         JOIN Turn t on t.TurnId = s.TurnId
                         WHERE s.SchedulingStatus != %s
-                        AND t.TurnTime > %s""", (SchedulingStatus.viewed.value, datetime.now()))
+                        AND t.TurnTime > %s
+                        AND DATE(t.TurnTime) = %s
+                        ORDER BY t.TurnTime ASC
+                        """, (SchedulingStatus.confirmed.value, now, today))
         scheduling_loaded = cursor.fetchall()
 
         return SchedulingService._to_scheduling_df(scheduling_loaded)
@@ -50,9 +73,6 @@ class SchedulingService:
 
         scheduling_df[scheduling.turn.turn_time] = pd.to_datetime(scheduling_df[scheduling.turn.turn_time]).dt.strftime(
             '%d/%m %H:%M')
-
-        scheduling_df[scheduling.scheduling_status] = scheduling_df[scheduling.scheduling_status].apply(
-            lambda x: SchedulingStatus(x).name)
 
         return scheduling_df
 
@@ -81,8 +101,39 @@ class SchedulingService:
                                              rescheduling_request.new_scheduling_id)
 
     @staticmethod
+    def confirm_presence(cursor, scheduling_id: int) -> bool:
+        cursor.execute(
+            """Update Scheduling set SchedulingStatus = %s WHERE SchedulingId = %s""",
+            (SchedulingStatus.confirmed.value, scheduling_id,))
+
+        return cursor.rowcount > 0
+
+    @staticmethod
+    def insert_schedules(cursor, schedules: List) -> bool:
+        for schedule in schedules:
+            insert_turn_query = "INSERT INTO Turn (TurnTime) VALUES (%s)"
+            cursor.execute(insert_turn_query, (schedule,))
+
+            turn_id = cursor.lastrowid
+
+            insert_scheduling_query = """
+            INSERT INTO Scheduling (PersonId, OrganizerId, TurnId, RoomId, ChairId, SchedulingStatus)
+            VALUES (NULL, NULL, %s, 1, %s, %s)
+            """
+            cursor.execute(insert_scheduling_query, (turn_id, 1, SchedulingStatus.available.value))
+            cursor.execute(insert_scheduling_query, (turn_id, 2, SchedulingStatus.available.value))
+
+        return cursor.rowcount > 0
+
+    @staticmethod
     def _to_scheduling_df(scheduling_loaded) -> pd.DataFrame:
         scheduling = Scheduling()
-        return pd.DataFrame(scheduling_loaded, columns=[scheduling.scheduling_id, scheduling.person_id,
-                                                        scheduling.organizer_id, scheduling.turn_id, scheduling.room_id,
-                                                        scheduling.chair_id, scheduling.scheduling_status])
+
+        scheduling_df = pd.DataFrame(scheduling_loaded, columns=[scheduling.scheduling_id, scheduling.turn_id,
+                                                                 scheduling.turn.turn_time,
+                                                                 scheduling.scheduling_status])
+
+        scheduling_df[scheduling.turn.turn_time] = pd.to_datetime(scheduling_df[scheduling.turn.turn_time]).dt.strftime(
+            '%Y-%m-%d %H:%M:%S')
+
+        return scheduling_df

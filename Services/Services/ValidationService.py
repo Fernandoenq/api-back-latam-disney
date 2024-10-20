@@ -106,3 +106,8 @@ class ValidationService:
     def validate_rescheduling(cursor) -> ValidationResult:
         result = ValidationResult()
         return result
+
+    @staticmethod
+    def validate_confirmation(cursor, scheduling_id: int) -> ValidationResult:
+        result = ValidationResult()
+        return result

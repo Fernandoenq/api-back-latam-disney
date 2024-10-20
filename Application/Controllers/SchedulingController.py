@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from datetime import datetime
 import traceback
 from Services.Services.ConnectionService import ConnectionService
 from Services.Services.ValidationService import ValidationService
@@ -122,6 +123,62 @@ class SchedulingController:
                 if is_rescheduled is False:
                     return jsonify(
                         ErrorResponseModel(Errors=['Não foi possível realizar este reagendamento']).dict()), 422
+
+                connection.commit()
+                return jsonify(), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/ConfirmPresence/<int:scheduling_id>', methods=['PUT'])
+        def confirm_presence(scheduling_id):
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                validations = ValidationService.validate_confirmation(cursor, scheduling_id)
+                if validations.is_valid is False:
+                    return jsonify(ErrorResponseModel(Errors=validations.errors).dict()), 422
+
+                is_confirmed = SchedulingService().confirm_presence(cursor, scheduling_id)
+                if is_confirmed is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Não foi possível realizar esta confirmação']).dict()), 422
+
+                connection.commit()
+                return jsonify(), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
+        @app.route('/Scheduling/InsertSchedules', methods=['POST'])
+        def insert_schedules():
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                schedules = request.get_json()
+                schedules = schedules.get('Schedules', [])
+                schedules = [datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S') for date_str in schedules]
+
+                is_inserted = SchedulingService().insert_schedules(cursor, schedules)
+                if is_inserted is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Não foi possível inserir os horários de agendamentos']).dict()), 422
 
                 connection.commit()
                 return jsonify(), 200
