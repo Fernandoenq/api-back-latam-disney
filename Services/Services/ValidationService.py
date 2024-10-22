@@ -5,6 +5,10 @@ from Application.Models.Request.OrganizerLoginRequestModel import OrganizerLogin
 from Services.Services.PersonService import PersonService
 from Services.Services.OrganizerService import OrganizerService
 from Services.Services.SchedulingService import SchedulingService
+from Application.Models.Request.SchedulingRequestModel import SchedulingRequestModel
+from Application.Models.Request.ReschedulingRequestModel import ReschedulingRequestModel
+from Domain.Entities.Scheduling import Scheduling
+from Domain.Enums.SchedulingStatus import SchedulingStatus
 
 
 class ValidationService:
@@ -98,16 +102,38 @@ class ValidationService:
         return result
 
     @staticmethod
-    def validate_scheduling(cursor) -> ValidationResult:
+    def validate_scheduling(cursor, scheduling_request: SchedulingRequestModel) -> ValidationResult:
         result = ValidationResult()
+
+        scheduling_df = SchedulingService.get_schedules_by_id(cursor, scheduling_request.scheduling_id)
+        scheduling = Scheduling()
+
+        if int(scheduling_df[scheduling.scheduling_status][0]) != SchedulingStatus.available.value:
+            result.add_error("Poltrona indisponível")
+            return result
+
         return result
 
     @staticmethod
-    def validate_rescheduling(cursor) -> ValidationResult:
+    def validate_rescheduling(cursor, rescheduling_request: ReschedulingRequestModel) -> ValidationResult:
         result = ValidationResult()
+        scheduling_df = SchedulingService.get_schedules_by_id(cursor, rescheduling_request.new_scheduling_id)
+        scheduling = Scheduling()
+
+        if int(scheduling_df[scheduling.scheduling_status][0]) != SchedulingStatus.available.value:
+            result.add_error("Poltrona indisponível")
+            return result
+
         return result
 
     @staticmethod
     def validate_confirmation(cursor, scheduling_id: int) -> ValidationResult:
         result = ValidationResult()
+        scheduling_df = SchedulingService.get_schedules_by_id(cursor, scheduling_id)
+        scheduling = Scheduling()
+
+        if int(scheduling_df[scheduling.scheduling_status][0]) != SchedulingStatus.busy.value:
+            result.add_error("Só é possível confirmar a presença em poltronas que estão ocupadas")
+            return result
+
         return result

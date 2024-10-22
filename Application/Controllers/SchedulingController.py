@@ -39,7 +39,7 @@ class SchedulingController:
             connection.start_transaction()
 
             try:
-                schedule_df = SchedulingService().get_not_viewed_schedules(cursor)
+                schedule_df = SchedulingService().get_schedules(cursor)
 
                 return jsonify(schedule_df.to_dict(orient='records')), 200
 
@@ -82,7 +82,7 @@ class SchedulingController:
                 scheduling_request = request.get_json()
                 scheduling_request = SchedulingRequestModel(scheduling_request)
 
-                validations = ValidationService.validate_scheduling(cursor)
+                validations = ValidationService.validate_scheduling(cursor, scheduling_request)
                 if validations.is_valid is False:
                     return jsonify(ErrorResponseModel(Errors=validations.errors).dict()), 422
 
@@ -115,7 +115,7 @@ class SchedulingController:
                 rescheduling_request = request.get_json()
                 rescheduling_request = ReschedulingRequestModel(rescheduling_request)
 
-                validations = ValidationService.validate_rescheduling(cursor)
+                validations = ValidationService.validate_rescheduling(cursor, rescheduling_request)
                 if validations.is_valid is False:
                     return jsonify(ErrorResponseModel(Errors=validations.errors).dict()), 422
 

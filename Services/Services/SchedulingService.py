@@ -1,4 +1,3 @@
-from Application.Models.Request.SchedulingRequestModel import SchedulingRequestModel
 from Application.Models.Request.ReschedulingRequestModel import ReschedulingRequestModel
 from Domain.Entities.Scheduling import Scheduling
 from Domain.Enums.SchedulingStatus import SchedulingStatus
@@ -39,7 +38,7 @@ class SchedulingService:
         return SchedulingService._to_scheduling_df(scheduling_loaded)
 
     @staticmethod
-    def get_not_viewed_schedules(cursor) -> pd.DataFrame:
+    def get_schedules(cursor) -> pd.DataFrame:
         now = datetime.now()
         today = now.date()
 
@@ -47,11 +46,10 @@ class SchedulingService:
                         SELECT s.SchedulingId, t.TurnId, t.TurnTime, s.SchedulingStatus 
                         FROM Scheduling s
                         JOIN Turn t on t.TurnId = s.TurnId
-                        WHERE s.SchedulingStatus != %s
-                        AND t.TurnTime > %s
+                        WHERE t.TurnTime > %s
                         AND DATE(t.TurnTime) = %s
                         ORDER BY t.TurnTime ASC
-                        """, (SchedulingStatus.confirmed.value, now, today))
+                        """, (now, today))
         scheduling_loaded = cursor.fetchall()
 
         return SchedulingService._to_scheduling_df(scheduling_loaded)
