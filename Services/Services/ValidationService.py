@@ -117,9 +117,14 @@ class ValidationService:
     @staticmethod
     def validate_rescheduling(cursor, rescheduling_request: ReschedulingRequestModel) -> ValidationResult:
         result = ValidationResult()
-        scheduling_df = SchedulingService.get_schedules_by_id(cursor, rescheduling_request.new_scheduling_id)
         scheduling = Scheduling()
 
+        scheduling_df = SchedulingService.get_schedules_by_id(cursor, rescheduling_request.old_scheduling_id)
+        if int(scheduling_df[scheduling.scheduling_status][0]) == SchedulingStatus.confirmed.value:
+            result.add_error("Este agendamento já foi confirmado. Não é possível reagendar")
+            return result
+
+        scheduling_df = SchedulingService.get_schedules_by_id(cursor, rescheduling_request.new_scheduling_id)
         if int(scheduling_df[scheduling.scheduling_status][0]) != SchedulingStatus.available.value:
             result.add_error("Poltrona indisponível")
             return result

@@ -10,6 +10,8 @@ class Scheduling:
     def __init__(self):
         self.scheduling_id = 'SchedulingId'
         self.person_id = 'PersonId'
+        self.scheduling_date = 'SchedulingDate'
+        self.confirmation_date = 'ConfirmationDate'
         self.organizer_id = 'OrganizerId'
         self.turn_id = 'TurnId'
         self.room_id = 'RoomId'
@@ -21,6 +23,6 @@ class Scheduling:
         self.organizer = Organizer()
         self.turn = Turn()
 
-        self.scheduling_df = pd.DataFrame(columns=[self.scheduling_id, self.person_id,
-                                                   self.organizer_id, self.turn_id,
+        self.scheduling_df = pd.DataFrame(columns=[self.scheduling_id, self.person_id, self.scheduling_date,
+                                                   self.confirmation_date, self.organizer_id, self.turn_id,
                                                    self.room_id, self.chair_id, self.scheduling_status])

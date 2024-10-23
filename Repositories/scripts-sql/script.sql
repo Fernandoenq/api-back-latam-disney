@@ -47,6 +47,7 @@ CREATE TABLE Scheduling (
     RoomId int NOT NULL,
     ChairId int NOT NULL,
     SchedulingStatus int NOT NULL,
+    SchedulingDate TIMESTAMP NOT NULL,
     FOREIGN KEY (PersonId) REFERENCES Person(PersonId),
     FOREIGN KEY (OrganizerId) REFERENCES Organizer(OrganizerId),
     FOREIGN KEY (TurnId) REFERENCES Turn(TurnId),
