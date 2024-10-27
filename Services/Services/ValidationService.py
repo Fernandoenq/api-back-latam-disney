@@ -22,8 +22,13 @@ class ValidationService:
 
         if (person_request.register_date is None or person_request.person_name is None
                 or person_request.cpf is None or person_request.phone is None or person_request.birth_date is None
-                or person_request.mail is None):
+                or person_request.mail is None or person_request.has_accepted_promotion is None
+                or person_request.has_accepted_participation is None):
             result.add_error("Dados de requisição não enviados")
+            return result
+
+        if not person_request.has_accepted_participation:
+            result.add_error("É necessário o compartilhamento dos dados para poder jogar")
             return result
 
         person_df = PersonService().get_person_by_cpf(person_request.cpf, cursor)

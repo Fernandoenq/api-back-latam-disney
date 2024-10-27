@@ -10,3 +10,5 @@ class PersonRequestModel:
         self.phone = person_request[roulette_person.phone]
         self.birth_date = person_request[roulette_person.birth_date]
         self.mail = person_request[roulette_person.mail]
+        self.has_accepted_participation = person_request[roulette_person.has_accepted_participation]
+        self.has_accepted_promotion = person_request[roulette_person.has_accepted_promotion]

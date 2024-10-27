@@ -9,12 +9,14 @@ CREATE TABLE Organizer (
 
 CREATE TABLE Person (
     PersonId int AUTO_INCREMENT PRIMARY KEY,
-    PersonName VARCHAR(1000) NOT NULL,
-    Cpf VARCHAR(50) NOT NULL,
-    Phone VARCHAR(50) NOT NULL,
-    BirthDate DATETIME NOT NULL,
-    Mail VARCHAR(100) NOT NULL,
-    RegisterDate TIMESTAMP NOT NULL
+    PersonName VARCHAR(1000) NULL,
+    Cpf VARCHAR(50) NULL,
+    Phone VARCHAR(50) NULL,
+    BirthDate DATETIME NULL,
+    Mail VARCHAR(100) NULL,
+    RegisterDate TIMESTAMP NULL,
+    HasAcceptedPromotion BINARY,
+    HasAcceptedParticipation BINARY,
 );
 
 CREATE TABLE Room (
@@ -42,12 +44,13 @@ CREATE TABLE Turn (
 CREATE TABLE Scheduling (
     SchedulingId int AUTO_INCREMENT PRIMARY KEY,
     PersonId int NULL,
+    ConfirmationDate TIMESTAMP,
+    SchedulingDate TIMESTAMP,
     OrganizerId int NULL,
 	TurnId int NOT NULL,
     RoomId int NOT NULL,
     ChairId int NOT NULL,
     SchedulingStatus int NOT NULL,
-    SchedulingDate TIMESTAMP NOT NULL,
     FOREIGN KEY (PersonId) REFERENCES Person(PersonId),
     FOREIGN KEY (OrganizerId) REFERENCES Organizer(OrganizerId),
     FOREIGN KEY (TurnId) REFERENCES Turn(TurnId),
