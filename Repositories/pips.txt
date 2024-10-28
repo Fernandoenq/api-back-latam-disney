@@ -6,7 +6,7 @@ pip install flask
 pip install flask-cors
 pip install pydantic
 pip install schedule
-pip install pywhatkit 5.3
+pip install boto3
 
 
 sudo timedatectl set-timezone America/Sao_Paulo

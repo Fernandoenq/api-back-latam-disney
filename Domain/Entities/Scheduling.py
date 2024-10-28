@@ -17,6 +17,7 @@ class Scheduling:
         self.room_id = 'RoomId'
         self.chair_id = 'ChairId'
         self.scheduling_status = 'SchedulingStatus'
+        self.is_notified = 'IsNotified'
         self.chair = Chair()
         self.person = Person()
         self.room = Room()
@@ -25,4 +26,5 @@ class Scheduling:
 
         self.scheduling_df = pd.DataFrame(columns=[self.scheduling_id, self.person_id, self.scheduling_date,
                                                    self.confirmation_date, self.organizer_id, self.turn_id,
-                                                   self.room_id, self.chair_id, self.scheduling_status])
+                                                   self.room_id, self.chair_id, self.scheduling_status,
+                                                   self.is_notified])

@@ -82,6 +82,28 @@ class SchedulingService:
         return scheduling_df
 
     @staticmethod
+    def get_notifiable_schedules(cursor, advance_date: datetime, now: datetime) -> pd.DataFrame:
+        cursor.execute("""
+                        SELECT p.PersonName, p.Phone, t.TurnTime, s.SchedulingId FROM `Scheduling` s 
+                        JOIN Person p on p.PersonId = s.PersonId
+                        JOIN Turn t on t.TurnId = s.TurnId
+                        WHERE s.SchedulingStatus = %s
+                        AND t.TurnTime >= %s
+                        AND t.TurnTime <= %s
+                        And s.IsNotified = 0
+                        """, (SchedulingStatus.busy.value, now, advance_date))
+        scheduling_loaded = cursor.fetchall()
+
+        scheduling = Scheduling()
+        return pd.DataFrame(scheduling_loaded, columns=[scheduling.person.person_name, scheduling.person.phone,
+                                                        scheduling.turn.turn_time, scheduling.scheduling_id])
+
+    @staticmethod
+    def to_confirm_notification(cursor, scheduling_id: int) -> bool:
+        cursor.execute("""Update Scheduling set IsNotified = 1 WHERE SchedulingId = %s """, (scheduling_id,))
+        return cursor.rowcount > 0
+
+    @staticmethod
     def to_schedule(cursor, person_id: int, organizer_id: int, scheduling_id: int) -> bool:
         cursor.execute("""Update Scheduling set PersonId = %s, OrganizerId = %s, SchedulingStatus = %s,
                         SchedulingDate = %s
@@ -124,7 +146,7 @@ class SchedulingService:
 
             insert_scheduling_query = """
             INSERT INTO Scheduling (PersonId, SchedulingDate, ConfirmationDate, OrganizerId, TurnId, RoomId, ChairId, 
-            SchedulingStatus) VALUES (NULL, NULL, NULL, NULL, %s, 1, %s, %s)
+            SchedulingStatus, IsNotified) VALUES (NULL, NULL, NULL, NULL, %s, 1, %s, %s, 0)
             """
             cursor.execute(insert_scheduling_query, (turn_id, 1, SchedulingStatus.available.value))
             cursor.execute(insert_scheduling_query, (turn_id, 2, SchedulingStatus.available.value))
