@@ -41,6 +41,7 @@ def notify():
 
             notifiable_schedules_df = SchedulingService().get_notifiable_schedules(cursor, advance_date, now)
             if notifiable_schedules_df.empty:
+                print(f"[Notificador] Nenhuma notificação: {datetime.now()}")
                 return
 
             schedule_df = Scheduling()
@@ -76,7 +77,7 @@ def notify():
                     continue
 
             connection.commit()
-            print(f"[Notificador]: Última notificação: {datetime.now()}")
+            print(f"[Notificador] Última notificação: {datetime.now()}")
 
         except Exception as e:
             if connection is not None and connection.is_connected():

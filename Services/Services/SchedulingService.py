@@ -19,6 +19,21 @@ class SchedulingService:
                                                         scheduling.scheduling_status])
 
     @staticmethod
+    def get_turns_by_schedule_id(cursor, scheduling_id: int) -> pd.DataFrame:
+        cursor.execute("""
+                        SELECT PersonId, TurnId
+                        FROM Scheduling
+                        WHERE TurnId = (
+                            SELECT TurnId 
+                            FROM Scheduling
+                            WHERE SchedulingId = %s
+                        );""", (scheduling_id,))
+        scheduling_loaded = cursor.fetchall()
+
+        scheduling = Scheduling()
+        return pd.DataFrame(scheduling_loaded, columns=[scheduling.person_id, scheduling.turn_id])
+
+    @staticmethod
     def get_schedules_by_cpf(cursor, cpf: str) -> pd.DataFrame:
         now = datetime.now()
         today = now.date()
