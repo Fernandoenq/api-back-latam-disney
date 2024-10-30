@@ -90,7 +90,7 @@ def notify():
             return
 
 
-schedule.every(1).seconds.do(notify)
+schedule.every(2).minutes.do(notify)
 
 while True:
     schedule.run_pending()
