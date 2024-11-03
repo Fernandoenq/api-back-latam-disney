@@ -9,11 +9,12 @@ CREATE TABLE Organizer (
 
 CREATE TABLE Person (
     PersonId int AUTO_INCREMENT PRIMARY KEY,
-    PersonName VARCHAR(1000) NULL,
+    PersonName VARCHAR(800) NULL,
     Cpf VARCHAR(50) NULL,
     Phone VARCHAR(50) NULL,
     BirthDate DATETIME NULL,
     Mail VARCHAR(100) NULL,
+    CountryName VARCHAR(800) NULL,
     RegisterDate TIMESTAMP NULL,
     HasAcceptedPromotion BINARY,
     HasAcceptedParticipation BINARY,

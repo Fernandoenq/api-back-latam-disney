@@ -23,7 +23,7 @@ class ValidationService:
         if (person_request.register_date is None or person_request.person_name is None
                 or person_request.cpf is None or person_request.phone is None or person_request.birth_date is None
                 or person_request.mail is None or person_request.has_accepted_promotion is None
-                or person_request.has_accepted_participation is None):
+                or person_request.has_accepted_participation is None or person_request.country_name is None):
             result.add_error("Dados de requisição não enviados")
             return result
 

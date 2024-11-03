@@ -12,3 +12,4 @@ class PersonRequestModel:
         self.mail = person_request[roulette_person.mail]
         self.has_accepted_participation = person_request[roulette_person.has_accepted_participation]
         self.has_accepted_promotion = person_request[roulette_person.has_accepted_promotion]
+        self.country_name = person_request[roulette_person.country_name]
