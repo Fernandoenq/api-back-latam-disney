@@ -1,4 +1,9 @@
-use session_latam;
+drop table Scheduling;
+drop table Chair;
+drop table Room;
+drop table Person;
+drop table Organizer;
+drop table Turn;
 
 CREATE TABLE Organizer (
     OrganizerId int AUTO_INCREMENT PRIMARY KEY,
@@ -17,7 +22,7 @@ CREATE TABLE Person (
     CountryName VARCHAR(800) NULL,
     RegisterDate TIMESTAMP NULL,
     HasAcceptedPromotion BINARY,
-    HasAcceptedParticipation BINARY,
+    HasAcceptedParticipation BINARY
 );
 
 CREATE TABLE Room (
@@ -34,8 +39,8 @@ CREATE TABLE Chair (
 );
 INSERT INTO Chair (ChairName)
 VALUES
-('Cadeira 1'),
-('Cadeira 2');
+('Poltrona 1'),
+('Poltrona 2');
 
 CREATE TABLE Turn (
     TurnId int AUTO_INCREMENT PRIMARY KEY,
@@ -59,5 +64,3 @@ CREATE TABLE Scheduling (
     FOREIGN KEY (RoomId) REFERENCES Room(RoomId),
     FOREIGN KEY (ChairId) REFERENCES Chair(ChairId)
 );
-
-
