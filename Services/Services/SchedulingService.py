@@ -114,6 +114,20 @@ class SchedulingService:
                                                         scheduling.turn.turn_time, scheduling.scheduling_id])
 
     @staticmethod
+    def get_person_to_confirm(cursor, scheduling_id: int) -> pd.DataFrame:
+        cursor.execute("""
+                            SELECT p.PersonName, p.Phone, t.TurnTime FROM Scheduling s 
+                            JOIN Person p on p.PersonId = s.PersonId
+                            JOIN Turn t on t.TurnId = s.TurnId
+                            WHERE s.SchedulingId= %s
+                            """, (scheduling_id,))
+        scheduling_loaded = cursor.fetchall()
+
+        scheduling = Scheduling()
+        return pd.DataFrame(scheduling_loaded, columns=[scheduling.person.person_name, scheduling.person.phone,
+                                                        scheduling.turn.turn_time])
+
+    @staticmethod
     def to_confirm_notification(cursor, scheduling_id: int) -> bool:
         cursor.execute("""Update Scheduling set IsNotified = 1 WHERE SchedulingId = %s """, (scheduling_id,))
         return cursor.rowcount > 0

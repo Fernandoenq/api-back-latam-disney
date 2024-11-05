@@ -1,12 +1,15 @@
 from flask import jsonify, request
 from datetime import datetime
 import traceback
+import pandas as pd
 from Services.Services.ConnectionService import ConnectionService
 from Services.Services.ValidationService import ValidationService
 from Application.Models.Request.SchedulingRequestModel import SchedulingRequestModel
 from Application.Models.Request.ReschedulingRequestModel import ReschedulingRequestModel
 from Services.Services.SchedulingService import SchedulingService
 from Application.Models.Response.ErrorResponseModel import ErrorResponseModel
+from Services.Services.SqsService import SqsService
+from Domain.Entities.Scheduling import Scheduling
 
 
 class SchedulingController:
@@ -94,6 +97,24 @@ class SchedulingController:
                         ErrorResponseModel(Errors=['Não foi possível realizar este agendamento']).dict()), 422
 
                 connection.commit()
+
+                person_to_confirm_df = SchedulingService.get_person_to_confirm(cursor, scheduling_request.scheduling_id)
+                scheduling = Scheduling()
+                name = str(person_to_confirm_df[scheduling.person.person_name][0])
+                phone = str(person_to_confirm_df[scheduling.person.phone][0])
+                turn_time = pd.to_datetime(person_to_confirm_df[scheduling.turn.turn_time][0])
+                message_sqs = {
+                    "origin": 1,
+                    "phone": phone,
+                    "message": (f"Seu embarque com a LATAM está confirmado! "
+                                f"Prepare-se para explorar os Destinos Encantados às {turn_time.strftime('%H:%M')}")
+                }
+
+                is_notified = SqsService().notify(message_sqs, name, phone)
+                if is_notified is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Agendamento realizado com sucesso. Porém, não foi enviar a confirmação do agendamento para o cliente']).dict()), 422
+
                 return jsonify(), 200
 
             except Exception as e:
