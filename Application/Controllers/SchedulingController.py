@@ -55,14 +55,14 @@ class SchedulingController:
                 if connection.is_connected():
                     ConnectionService.close_connection(cursor, connection)
 
-        @app.route('/Scheduling/Dashboard', methods=['GET'])
-        def get_dashboard():
+        @app.route('/Scheduling/Dashboard/<int:day>', methods=['GET'])
+        def get_dashboard(day):
             connection = ConnectionService.open_connection()
             cursor = connection.cursor()
             connection.start_transaction()
 
             try:
-                schedule_df = SchedulingService().get_all_schedules(cursor)
+                schedule_df = SchedulingService().get_all_schedules(cursor, day)
 
                 return jsonify(schedule_df.to_dict(orient='records')), 200
 

@@ -72,14 +72,17 @@ class SchedulingService:
         return SchedulingService._to_scheduling_df(scheduling_loaded)
 
     @staticmethod
-    def get_all_schedules(cursor) -> pd.DataFrame:
+    def get_all_schedules(cursor, day: int) -> pd.DataFrame:
+        date = datetime(year=2024, month=11, day=day)
+
         cursor.execute("""SELECT p.PersonName, p.Cpf, s.SchedulingDate, t.TurnTime, c.ChairName, s.SchedulingStatus 
                         FROM Scheduling s
                         LEFT JOIN Person p on p.PersonId = s.PersonId
                         JOIN Room r on r.RoomId = s.RoomId
                         JOIN Chair c on c.ChairId = s.ChairId
                         JOIN Turn t on t.TurnId = s.TurnId
-                        ORDER BY t.TurnTime ASC""")
+                        WHERE DATE(t.TurnTime) = %s
+                        ORDER BY t.TurnTime ASC""", (date,))
         scheduling_loaded = cursor.fetchall()
 
         scheduling = Scheduling()

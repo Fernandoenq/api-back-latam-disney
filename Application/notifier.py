@@ -32,7 +32,7 @@ def notify():
             cursor = connection.cursor()
 
             now = datetime.now()
-            advance_date = now + timedelta(minutes=15)
+            advance_date = now + timedelta(minutes=20)
 
             notifiable_schedules_df = SchedulingService().get_notifiable_schedules(cursor, advance_date, now)
             if notifiable_schedules_df.empty:
@@ -47,7 +47,7 @@ def notify():
                 message_sqs = {
                     "origin": 1,
                     "phone": phone,
-                    "message": (f"Atenção!\n\nSeu embarque começa em 10 minutos. Dirija-se ao stand da LATAM e "
+                    "message": (f"Atenção!\n\nSeu embarque começa em 15 minutos. Dirija-se ao stand da LATAM e "
                                 f"prepare-se para decolar rumo aos Destinos Encantados")
                 }
 
