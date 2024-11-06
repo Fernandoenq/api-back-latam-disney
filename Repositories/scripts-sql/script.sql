@@ -11,6 +11,9 @@ CREATE TABLE Organizer (
     Login VARCHAR(50) UNIQUE,
     SecretKey VARCHAR(50)
 );
+INSERT INTO Organizer (OrganizerName, Login, SecretKey)
+VALUES
+('Fernando Filho', '123', '123');
 
 CREATE TABLE Person (
     PersonId int AUTO_INCREMENT PRIMARY KEY,

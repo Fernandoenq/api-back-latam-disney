@@ -2,7 +2,7 @@ from Application.Models.Request.ReschedulingRequestModel import ReschedulingRequ
 from Domain.Entities.Scheduling import Scheduling
 from Domain.Enums.SchedulingStatus import SchedulingStatus
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 
@@ -56,7 +56,7 @@ class SchedulingService:
 
     @staticmethod
     def get_schedules(cursor) -> pd.DataFrame:
-        now = datetime.now()
+        now = datetime.now() + timedelta(minutes=1)
         today = now.date()
 
         cursor.execute("""
@@ -75,24 +75,32 @@ class SchedulingService:
     def get_all_schedules(cursor) -> pd.DataFrame:
         cursor.execute("""SELECT p.PersonName, p.Cpf, s.SchedulingDate, t.TurnTime, c.ChairName, s.SchedulingStatus 
                         FROM Scheduling s
-                        JOIN Person p on p.PersonId = s.PersonId
+                        LEFT JOIN Person p on p.PersonId = s.PersonId
                         JOIN Room r on r.RoomId = s.RoomId
                         JOIN Chair c on c.ChairId = s.ChairId
                         JOIN Turn t on t.TurnId = s.TurnId
-                        ORDER BY t.TurnTime DESC""")
+                        ORDER BY t.TurnTime ASC""")
         scheduling_loaded = cursor.fetchall()
 
         scheduling = Scheduling()
-        scheduling_df = pd.DataFrame(scheduling_loaded, columns=[scheduling.person.person_name, scheduling.person.cpf,
-                                                                 scheduling.scheduling_date, scheduling.turn.turn_time,
-                                                                 scheduling.chair.chair_name,
-                                                                 scheduling.scheduling_status])
+        scheduling_df = pd.DataFrame(scheduling_loaded, columns=[
+            scheduling.person.person_name,
+            scheduling.person.cpf,
+            scheduling.scheduling_date,
+            scheduling.turn.turn_time,
+            scheduling.chair.chair_name,
+            scheduling.scheduling_status
+        ])
 
-        scheduling_df[scheduling.turn.turn_time] = pd.to_datetime(scheduling_df[scheduling.turn.turn_time]).dt.strftime(
-            '%d/%m %H:%M')
+        scheduling_df[scheduling.turn.turn_time] = pd.to_datetime(
+            scheduling_df[scheduling.turn.turn_time], errors='coerce'
+        ).dt.strftime('%d/%m %H:%M')
+
         scheduling_df[scheduling.scheduling_date] = pd.to_datetime(
-            scheduling_df[scheduling.scheduling_date]).dt.strftime(
-            '%d/%m %H:%M')
+            scheduling_df[scheduling.scheduling_date], errors='coerce'
+        ).dt.strftime('%d/%m %H:%M')
+
+        scheduling_df = scheduling_df.where(pd.notnull(scheduling_df), None)
 
         return scheduling_df
 
@@ -147,7 +155,8 @@ class SchedulingService:
 
         cursor.execute(
             """Update Scheduling set PersonId = null, OrganizerId = null, SchedulingDate = null, SchedulingStatus = %s 
-            WHERE SchedulingId = %s""", (SchedulingStatus.available.value, rescheduling_request.old_scheduling_id,))
+            IsNotified = 0 WHERE SchedulingId = %s""",
+            (SchedulingStatus.available.value, rescheduling_request.old_scheduling_id,))
 
         if cursor.rowcount <= 0:
             return False
@@ -164,6 +173,15 @@ class SchedulingService:
             (SchedulingStatus.confirmed.value, datetime.now(), scheduling_id,))
 
         return cursor.rowcount > 0
+
+    @staticmethod
+    def cancel_schedule(cursor, scheduling_id: int) -> bool:
+        cursor.execute(
+            """Update Scheduling set PersonId = null, OrganizerId = null, SchedulingDate = null, SchedulingStatus = %s, 
+            IsNotified = 0, ConfirmationDate = null 
+            WHERE SchedulingId = %s""", (SchedulingStatus.available.value, scheduling_id,))
+
+        return cursor.rowcount >= 0
 
     @staticmethod
     def insert_schedules(cursor, schedules: List) -> bool:

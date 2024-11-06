@@ -185,6 +185,30 @@ class SchedulingController:
                 if connection.is_connected():
                     ConnectionService.close_connection(cursor, connection)
 
+        @app.route('/Scheduling/CancelSchedule/<int:scheduling_id>', methods=['PUT'])
+        def cancel_schedule(scheduling_id):
+            connection = ConnectionService.open_connection()
+            cursor = connection.cursor()
+            connection.start_transaction()
+
+            try:
+                is_canceled = SchedulingService().cancel_schedule(cursor, scheduling_id)
+                if is_canceled is False:
+                    return jsonify(
+                        ErrorResponseModel(Errors=['Não foi possível cancelar este agendamento']).dict()), 422
+
+                connection.commit()
+                return jsonify(), 200
+
+            except Exception as e:
+                if connection.is_connected():
+                    connection.rollback()
+                error_response = ErrorResponseModel(Errors=[f"{str(e)} | {traceback.format_exc()}"])
+                return jsonify(error_response.dict()), 500
+            finally:
+                if connection.is_connected():
+                    ConnectionService.close_connection(cursor, connection)
+
         @app.route('/Scheduling/InsertSchedules', methods=['POST'])
         def insert_schedules():
             connection = ConnectionService.open_connection()
