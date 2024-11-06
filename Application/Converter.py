@@ -16,7 +16,7 @@ try:
     for index, row in df.iterrows():
         day = row['Data']
         time = row['Horario']
-        schedule = datetime.strptime(f'2024-10-{int(day)} {time}', '%Y-%m-%d %Hh%M')
+        schedule = datetime.strptime(f'2024-11-{int(day)} {time}', '%Y-%m-%d %Hh%M')
         schedules.append(schedule)
 
     SchedulingService.insert_schedules(cursor, schedules)
