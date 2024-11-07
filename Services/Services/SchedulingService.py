@@ -56,7 +56,7 @@ class SchedulingService:
 
     @staticmethod
     def get_schedules(cursor) -> pd.DataFrame:
-        now = datetime.now() + timedelta(minutes=2)
+        now = datetime.now() - timedelta(minutes=2)
         today = now.date()
 
         cursor.execute("""
