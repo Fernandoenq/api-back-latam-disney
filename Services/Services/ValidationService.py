@@ -139,6 +139,11 @@ class ValidationService:
             result.add_error("Poltrona indisponível")
             return result
 
+        scheduling_df = SchedulingService.get_turns_by_schedule_id(cursor, rescheduling_request.new_scheduling_id)
+        if rescheduling_request.person_id in scheduling_df[scheduling.person_id].values:
+            result.add_error("Este participante já possui uma reserva de poltrona neste horário")
+            return result
+
         return result
 
     @staticmethod

@@ -157,7 +157,7 @@ class SchedulingService:
         scheduling_df = SchedulingService.get_schedules_by_id(cursor, rescheduling_request.old_scheduling_id)
 
         cursor.execute(
-            """Update Scheduling set PersonId = null, OrganizerId = null, SchedulingDate = null, SchedulingStatus = %s 
+            """Update Scheduling set PersonId = null, OrganizerId = null, SchedulingDate = null, SchedulingStatus = %s, 
             IsNotified = 0 WHERE SchedulingId = %s""",
             (SchedulingStatus.available.value, rescheduling_request.old_scheduling_id,))
 
