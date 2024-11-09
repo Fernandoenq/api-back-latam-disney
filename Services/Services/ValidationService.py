@@ -32,7 +32,7 @@ class ValidationService:
             return result
 
         person_df = PersonService().get_person_by_cpf(person_request.cpf, cursor)
-        if person_df.empty is False:
+        if person_request.cpf != 'NE' and person_df.empty is False:
             result.add_error("Participante já consta no sistema. Não é necessário este cadastro")
             return result
 
