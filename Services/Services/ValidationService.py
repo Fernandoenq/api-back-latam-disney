@@ -57,7 +57,7 @@ class ValidationService:
 
         cpf = request_cpf
 
-        if cpf == '24624624624':
+        if cpf == '24624624624' or cpf == 'NE':
             return result
 
         if len(cpf) != 11:
